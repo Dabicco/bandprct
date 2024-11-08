@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WIP Dabicco's Instrumental Practicing Tool</title>
+  <style>
+    /* Basic Reset */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    /* Light and Dark Mode Styles */
+    body.light-mode {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background-color: #f0f0f8;
+      color: #333;
+      padding: 20px;
+      text-align: center;
+      height: 100vh;
+      justify-content: center;
+    }
+
+    body.dark-mode {
+      background-color: #121212;
+      color: #f0f0f8;
+    }
+
+    h1 {
+      font-size: 2.5em;
+      color: #1a73e8;
+      margin-bottom: 20px;
+    }
+
+    p {
+      font-size: 1.2em;
+      max-width: 600px;
+      margin: 20px auto;
+    }
+
+    /* Loading Screen */
+    .loading-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #1a73e8;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5em;
+      z-index: 9999;
+    }
+
+    /* Main content */
+    .content {
+      display: none;
+      text-align: center;
+    }
+
+    /* Dropdown styling */
+    .dropdown-container {
+      position: relative;
+      margin-top: 30px;
+    }
+
+    .dropdown {
+      appearance: none;
+      background-color: #1a73e8;
+      color: #fff;
+      padding: 10px 20px;
+      font-size: 1em;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      width: 200px;
+    }
+
+    .dropdown:hover {
+      background-color: #1669c1;
+    }
+
+    .dropdown-container::after {
+      content: '▼';
+      font-size: 0.8em;
+      color: #fff;
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      pointer-events: none;
+    }
+
+    /* Option buttons */
+    .option-buttons {
+      margin-top: 20px;
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    .option-button {
+      background-color: #1a73e8;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      padding: 10px 15px;
+      font-size: 1em;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .option-button:hover {
+      background-color: #1669c1;
+    }
+
+    /* Settings icon and menu */
+    .settings-icon {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      font-size: 1.5em;
+      cursor: pointer;
+      color: #1a73e8;
+      transition: color 0.3s;
+    }
+
+    .settings-icon:hover {
+      color: #1669c1;
+    }
+
+    .settings-menu {
+      position: fixed;
+      bottom: 60px;
+      right: 20px;
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+      padding: 15px;
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+      font-size: 0.9em;
+    }
+
+    .dark-mode .settings-menu {
+      background-color: #333;
+      color: #fff;
+    }
+
+    .settings-menu.active {
+      display: flex;
+      animation: slide-in 0.3s ease-out;
+    }
+
+    @keyframes slide-in {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    /* Cookie notification */
+    .cookie-notification {
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      background-color: #333;
+      color: #fff;
+      text-align: center;
+      padding: 10px;
+      display: none;
+    }
+
+    .cookie-notification button {
+      background-color: #1a73e8;
+      color: #fff;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 5px;
+      margin-left: 10px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body class="light-mode">
+
+  <!-- Loading Screen -->
+  <div class="loading-screen">Loading...</div>
+
+  <!-- Main Content -->
+  <div class="content">
+    <h1>Welcome to my Instrumental Practicing Tool</h1>
+    <p>Thank you for visiting! This tool is currently in early access and not fully completed, but feel free to try it out and provide feedback as I continue to improve it.</p>
+
+    <div class="dropdown-container">
+      <select class="dropdown" id="instrumentSelect" onchange="displayOptions()">
+        <option value="">Select Your Instrument</option>
+        <option value="trombone">Trombone</option>
+        <option value="baritonebc">Baritone BC</option>
+      </select>
+    </div>
+
+    <div class="option-buttons" id="practiceOptions" style="display: none;"></div>
+  </div>
+
+  <!-- Settings Icon and Menu -->
+  <div class="settings-icon" onclick="toggleSettingsMenu()">⚙️</div>
+  <div class="settings-menu" id="settingsMenu">
+    <label>
+      <input type="checkbox" id="darkModeToggle" onclick="toggleDarkMode()"> Dark Mode
+    </label>
+  </div>
+
+  <!-- Cookie Notification -->
+  <div class="cookie-notification" id="cookieNotification">
+    This website uses cookies to enhance your experience. 
+    <button onclick="acceptCookies()">Got it!</button>
+  </div>
+
+  <script>
+    // Check for dark mode preference on page load
+    window.addEventListener("load", () => {
+      const darkMode = localStorage.getItem("darkMode");
+      if (darkMode === "enabled") {
+        document.body.classList.add("dark-mode");
+        document.getElementById("darkModeToggle").checked = true;
+      }
+      // Hide loading screen and show content
+      document.querySelector(".loading-screen").style.display = "none";
+      document.querySelector(".content").style.display = "block";
+
+      // Show cookie notification if not already accepted
+      if (!localStorage.getItem("cookiesAccepted")) {
+        document.getElementById("cookieNotification").style.display = "block";
+      }
+    });
+
+    // Dark Mode toggle
+    function toggleDarkMode() {
+      document.body.classList.toggle("dark-mode");
+      if (document.body.classList.contains("dark-mode")) {
+        localStorage.setItem("darkMode", "enabled");
+      } else {
+        localStorage.setItem("darkMode", "disabled");
+      }
+    }
+
+    // Settings Menu Toggle
+    function toggleSettingsMenu() {
+      document.getElementById("settingsMenu").classList.toggle("active");
+    }
+
+    // Display practice options based on instrument selection
+    function displayOptions() {
+      const instrument = document.getElementById("instrumentSelect").value;
+      const optionsContainer = document.getElementById("practiceOptions");
+      if (!instrument) {
+        optionsContainer.style.display = "none";
+        return;
+      }
+
+      optionsContainer.innerHTML = '';  // Clear existing buttons
+      const practiceTypes = [
+        { type: "letter", label: "Letter Practice" },
+        { type: "both", label: `${instrument === "trombone" ? "Slide Positions" : "Fingerings"} and Letters` },
+        { type: instrument === "trombone" ? "slidepos" : "fingerings", label: `${instrument === "trombone" ? "Slide Positions" : "Fingerings"}` }
+      ];
+
+      practiceTypes.forEach(({ type, label }) => {
+        const button = document.createElement("button");
+        button.className = "option-button";
+        button.textContent = label;
+        button.onclick = () => redirectToPractice(instrument, type);
+        optionsContainer.appendChild(button);
+      });
+
+      optionsContainer.style.display = "flex";
+    }
+
+    // Redirect based on selection
+    function redirectToPractice(instrument, practiceType) {
+      window.location.href = `/bandprct/${instrument}?practicetype=${practiceType}`;
+    }
+
+    // Accept cookies
+    function acceptCookies() {
+      localStorage.setItem("cookiesAccepted", "true");
+      document.getElementById("cookieNotification").style.display = "none";
+    }
+  </script>
+</body>
+</html>
